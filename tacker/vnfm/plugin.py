@@ -278,6 +278,10 @@ class VNFMPlugin(vnfm_db.VNFMPluginDb, VNFMMgmtMixin):
         appmonitor = self._vnf_app_monitor.create_app_dict(context, vnf_dict)
         self._vnf_app_monitor.add_to_appmonitor(appmonitor, vnf_dict)
 
+    def del_vnf_from_appmonitor(self, context, vnf_dict):
+        appmonitor = self._vnf_app_monitor.create_app_dict(context, vnf_dict)
+        self._vnf_app_monitor.del_vnf_from_appmonitor(appmonitor, vnf_dict)
+
     def config_vnf(self, context, vnf_dict):
         config = vnf_dict['attributes'].get('config')
         if not config:
@@ -641,9 +645,10 @@ class VNFMPlugin(vnfm_db.VNFMPluginDb, VNFMMgmtMixin):
         self._delete_vnf_post(context, vnf_dict, e)
 
     def _delete_vnf(self, context, vnf_id, force_delete=False):
-
         vnf_dict = self._delete_vnf_pre(context, vnf_id,
                                         force_delete=force_delete)
+        if 'app_monitoring_policy' in vnf_dict['attributes']:
+            self.del_vnf_from_appmonitor(context, vnf_dict)
         driver_name, vim_auth = self._get_infra_driver(context, vnf_dict)
         self._vnf_monitor.delete_hosting_vnf(vnf_id)
         instance_id = self._instance_id(vnf_dict)
