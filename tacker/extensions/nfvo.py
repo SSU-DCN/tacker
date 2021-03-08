@@ -822,7 +822,59 @@ RESOURCE_ATTRIBUTE_MAP = {
             'default': None,
         },
     },
-
+    'healings': {
+        'id': {
+            'allow_post': False,
+            'allow_put': False,
+            'is_visible': True,
+        },
+        'tenant_id': {
+            'allow_post': True,
+            'allow_put': False,
+            'validate': {'type:string': None},
+            'required_by_policy': True,
+            'is_visible': True
+        },
+        'event_id': {
+            'allow_post': True,
+            'allow_put': False,
+            'is_visible': True
+        },
+        'action_id': {
+            'allow_post': True,
+            'allow_put': False,
+            'is_visible': True
+        },
+        'action_type': {
+            'allow_post': True,
+            'allow_put': False,
+            'is_visible': True
+        },
+        'timestamp': {
+            'allow_post': False,
+            'allow_put': False,
+            'is_visible': True,
+        },
+        'policy_name': {
+            'allow_post': True,
+            'allow_put': True,
+            'is_visible': True
+        }
+    },
+    'alerts': {
+        'event_id': {
+            'allow_post': True,
+            'allow_put': False,
+            'is_visible': True
+        },
+        'tenant_id': {
+            'allow_post': True,
+            'allow_put': False,
+            'validate': {'type:string': None},
+            'required_by_policy': True,
+            'is_visible': True
+        }
+    }
 }
 
 

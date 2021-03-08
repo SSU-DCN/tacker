@@ -38,6 +38,7 @@ from tacker import context as t_context
 from tacker.db.nfvo import nfvo_db_plugin
 from tacker.db.nfvo import ns_db
 from tacker.db.nfvo import vnffg_db
+from tacker.db.nfvo import healing_db
 from tacker.extensions import common_services as cs
 from tacker.extensions import nfvo
 from tacker.keymgr import API as KEYMGR_API
@@ -46,6 +47,7 @@ from tacker.nfvo.workflows.vim_monitor import vim_monitor_utils
 from tacker.plugins.common import constants
 from tacker.vnfm import keystone
 from tacker.vnfm import vim_client
+from tacker.mistral import mistral_client
 
 from tacker.tosca import utils as toscautils
 from toscaparser import tosca_template
@@ -61,7 +63,7 @@ def config_opts():
 
 
 class NfvoPlugin(nfvo_db_plugin.NfvoPluginDb, vnffg_db.VnffgPluginDbMixin,
-                 ns_db.NSPluginDb):
+                 ns_db.NSPluginDb, healing_db.HAPluginDb):
     """NFVO reference plugin for NFVO extension
 
     Implements the NFVO extension and defines public facing APIs for VIM
@@ -987,3 +989,40 @@ class NfvoPlugin(nfvo_db_plugin.NfvoPluginDb, vnffg_db.VnffgPluginDbMixin,
             super(NfvoPlugin, self).delete_ns_post(
                 context, ns_id, None, None, force_delete=force_delete)
         return ns['id']
+
+    @log.log
+    def get_healing(self, context, healing_id, fields=None):
+        return super(NfvoPlugin, self).get_healing(context, healing_id)
+     
+    @log.log   
+    def get_healings(self, context, filters=None, fields=None):
+        return super(NfvoPlugin, self).get_healings(context, filters, fields)
+
+    @log.log
+    def create_healing(self, context, healing):
+        return super(NfvoPlugin, self).create_healing(context, healing)
+    
+    @log.log
+    def create_alert(self, context, alert):
+        alert = alert.get("alert", {})
+        actions = super(NfvoPlugin, self)._get_healing_by_event(context, alert.get("event_id"))
+
+        mistral = self._get_mistral_client(context)
+        for action in actions:
+            work_flow = {
+                "id": action["action_id"],
+                "input": {
+                    "nics": [{"net-id": "c5e2e468-a5b2-4ad0-8e54-2a2082f22a7a"}],
+                    "security_groups": "56758671-a714-42d2-a5a2-6189d0a88d28"
+                }
+            }
+            test = mistral.execute_workflow(work_flow)
+
+        return {}
+
+    def _get_mistral_client(self, context):
+        auth_dict = self.get_auth_dict(context)
+        ks = keystone.Keystone().initialize_client(**auth_dict)
+        return mistral_client.MistralClient(ks, auth_dict['token'])
+
+

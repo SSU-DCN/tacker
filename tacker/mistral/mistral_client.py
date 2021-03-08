@@ -25,3 +25,29 @@ class MistralClient(object):
 
     def get_client(self):
         return self.client
+    
+    def get_workflow(self, id):
+        workflows = self.client.workflows.get(id)
+        return self._get_workflow_dict(workflow)
+
+    def execute_workflow(self, workflow):
+        return  self.client.executions.create(
+        workflow_identifier=workflow['id'],
+        workflow_input=workflow['input'],
+        wf_params={})
+        
+
+    def list_workflow(self):
+        res = []
+        workflows = self.client.workflows.list()
+        for workflow in workflows:
+            res.append(self._get_workflow_dict(workflow))
+        return res
+
+    def _get_workflow_dict(self, workflow):
+        workflow = workflow.to_dict()
+        res = {}
+        key_list = ('id', 'input', 'definition', 'interface')
+        res.update((key, workflow[key]) for key in key_list)
+        return res
+
